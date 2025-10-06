@@ -33,6 +33,8 @@ data_store = {
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+# project
 def extract_text_from_file(file_path, file_extension):
     """Extract text content from uploaded files"""
     try:
