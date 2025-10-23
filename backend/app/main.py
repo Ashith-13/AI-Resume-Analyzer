@@ -9,7 +9,27 @@ from io import BytesIO
 import re
 
 app = Flask(__name__)
-CORS(app)
+
+# ✅ CORS Configuration for Netlify
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://localhost:3000",
+            "https://*.netlify.app",  # All Netlify preview deployments
+            "https://innomatics-resume-analyzer.netlify.app",  # Update with your actual URL after deployment
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
+        "supports_credentials": False,
+        "max_age": 3600
+    },
+    r"/": {
+        "origins": "*",
+        "methods": ["GET"]
+    }
+})
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -34,7 +54,6 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# project
 def extract_text_from_file(file_path, file_extension):
     """Extract text content from uploaded files"""
     try:
@@ -443,7 +462,13 @@ def health_check():
 def index():
     return jsonify({
         'message': 'Resume Screening API',
-        'version': '1.0.0'
+        'version': '1.0.0',
+        'endpoints': {
+            'health': '/api/health',
+            'upload': '/api/upload',
+            'analyze': '/api/analyze',
+            'files': '/api/files'
+        }
     }), 200
 
 if __name__ == '__main__':
