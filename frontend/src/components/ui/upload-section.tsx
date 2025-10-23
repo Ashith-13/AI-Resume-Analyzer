@@ -224,27 +224,25 @@ export function UploadSection() {
     }
 
     try {
-      // Try to fetch from the backend first
-      const response = await fetch(`http://127.0.0.1:5000/api/export/${currentAnalysisId}?format=${format}`);
+      // ✅ FIXED: Use api.exportResults instead of hardcoded localhost
+      const result = await api.exportResults(currentAnalysisId, format);
       
-      if (!response.ok) {
-        // If backend fails, generate the file on the frontend
+      if (result.success && result.blob) {
+        const url = window.URL.createObjectURL(result.blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.filename || `analysis_${currentAnalysisId}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        
+        showMessage('success', `Results exported as ${format.toUpperCase()}`);
+      } else {
+        // If backend fails, fallback to local generation
         console.warn('Backend export failed, generating file locally');
         generateLocalExport(format);
-        return;
       }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `analysis_${currentAnalysisId}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-      
-      showMessage('success', `Results exported as ${format.toUpperCase()}`);
     } catch (error) {
       console.error('Export error:', error);
       // Fallback to local generation

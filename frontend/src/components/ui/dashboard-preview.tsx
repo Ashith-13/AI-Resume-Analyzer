@@ -15,6 +15,9 @@ import {
   RefreshCw
 } from "lucide-react";
 
+// ✅ FIXED: Define API_BASE_URL from environment variable
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ai-resume-backend-os6v.onrender.com';
+
 interface CandidateDetail {
   resumeId: string;
   filename: string;
@@ -50,7 +53,8 @@ export default function DashboardPreview() {
     }
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/analyses');
+      // ✅ FIXED: Use API_BASE_URL instead of hardcoded localhost
+      const response = await fetch(`${API_BASE_URL}/api/analyses`);
       const data = await response.json();
       
       if (data.success && data.results) {
