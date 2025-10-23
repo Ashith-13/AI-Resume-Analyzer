@@ -1,8 +1,15 @@
-// src/services/api.js - FOR FLASK BACKEND
-// use Vite env var
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000/api';
-export { API_BASE_URL };
+// src/services/api.js
 
+// ✅ Fixed API base URL for Vite
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://ai-resume-backend-os6v.onrender.com";
+
+// ✅ Debug: Log the API URL to verify it's correct
+console.log("🔗 API_BASE_URL:", API_BASE_URL);
+console.log("🔗 import.meta.env.VITE_API_URL:", import.meta.env.VITE_API_URL);
+
+// ✅ Handle response helper
 const handleResponse = async (response) => {
   if (!response.ok) {
     let errorMessage = `HTTP error! status: ${response.status}`;
@@ -17,22 +24,20 @@ const handleResponse = async (response) => {
   return response.json();
 };
 
-// Upload files (Job Description or Resumes)
+// ✅ Upload files (Job Description or Resumes)
 export const uploadFiles = async (files, type = 'jd') => {
   try {
     const formData = new FormData();
     
-    // Add all files to FormData
     if (Array.isArray(files)) {
       files.forEach(file => formData.append('files', file));
     } else {
       formData.append('files', files);
     }
     
-    // Add type (jd or resume)
     formData.append('type', type);
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -63,10 +68,10 @@ export const uploadResume = async (file) => {
   return uploadFiles([file], 'resume');
 };
 
-// Analyze resumes against job description
+// ✅ Analyze resumes against job description
 export const analyzeResumes = async (jobDescriptionId, resumeIds) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/analyze`, {
+    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,10 +99,10 @@ export const analyzeResumes = async (jobDescriptionId, resumeIds) => {
   }
 };
 
-// Get all uploaded files
+// ✅ Get all uploaded files
 export const getUploadedFiles = async (type = 'all') => {
   try {
-    const response = await fetch(`${API_BASE_URL}/files?type=${type}`, {
+    const response = await fetch(`${API_BASE_URL}/api/files?type=${type}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -134,10 +139,10 @@ export const getAllResumes = async () => {
   }
 };
 
-// Get analysis results
+// ✅ Get analysis results
 export const getAnalysisResults = async (analysisId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/analysis/${analysisId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -158,10 +163,10 @@ export const getAnalysisResults = async (analysisId) => {
   }
 };
 
-// Delete file
+// ✅ Delete file
 export const deleteFile = async (fileId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/files/${fileId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -182,10 +187,10 @@ export const deleteFile = async (fileId) => {
   }
 };
 
-// Health check
+// ✅ Health check
 export const checkHealth = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/health`, {
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -199,11 +204,11 @@ export const checkHealth = async () => {
   }
 };
 
-// Export results
+// ✅ Export results
 export const exportResults = async (analysisId, format = 'json') => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/export/${analysisId}?format=${format}`,
+      `${API_BASE_URL}/api/export/${analysisId}?format=${format}`,
       {
         method: 'GET',
       }
