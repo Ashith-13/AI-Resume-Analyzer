@@ -9,6 +9,41 @@ const API_BASE_URL =
 console.log("🔗 API_BASE_URL:", API_BASE_URL);
 console.log("🔗 import.meta.env.VITE_API_URL:", import.meta.env.VITE_API_URL);
 
+// ✅ Wake up the backend server (for free tier Render)
+let isWakingUp = false;
+export const wakeUpBackend = async () => {
+  if (isWakingUp) return;
+  
+  isWakingUp = true;
+  console.log("⏰ Waking up backend server...");
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    
+    const response = await fetch(`${API_BASE_URL}/api/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      console.log("✅ Backend is awake!");
+      isWakingUp = false;
+      return true;
+    }
+  } catch (error) {
+    console.error("❌ Failed to wake backend:", error.message);
+  }
+  
+  isWakingUp = false;
+  return false;
+};
+
+// Call wake up on module load
+wakeUpBackend();
+
 // ✅ Handle response helper
 const handleResponse = async (response) => {
   if (!response.ok) {
@@ -24,6 +59,22 @@ const handleResponse = async (response) => {
   return response.json();
 };
 
+// ✅ Fetch with retry logic (for when backend is waking up)
+const fetchWithRetry = async (url, options, retries = 2) => {
+  try {
+    const response = await fetch(url, options);
+    return response;
+  } catch (error) {
+    if (retries > 0 && error.name === 'TypeError') {
+      console.log(`🔄 Retrying request... (${retries} attempts left)`);
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+      await wakeUpBackend(); // Try to wake up backend
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    throw error;
+  }
+};
+
 // ✅ Upload files (Job Description or Resumes)
 export const uploadFiles = async (files, type = 'jd') => {
   try {
@@ -37,7 +88,7 @@ export const uploadFiles = async (files, type = 'jd') => {
     
     formData.append('type', type);
 
-    const response = await fetch(`${API_BASE_URL}/api/upload`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
       body: formData,
     });
@@ -53,7 +104,7 @@ export const uploadFiles = async (files, type = 'jd') => {
     return {
       success: false,
       error: error.message,
-      message: 'Failed to upload files'
+      message: 'Failed to upload files. Backend may be waking up, please try again in 30 seconds.'
     };
   }
 };
@@ -71,7 +122,7 @@ export const uploadResume = async (file) => {
 // ✅ Analyze resumes against job description
 export const analyzeResumes = async (jobDescriptionId, resumeIds) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -102,7 +153,7 @@ export const analyzeResumes = async (jobDescriptionId, resumeIds) => {
 // ✅ Get all uploaded files
 export const getUploadedFiles = async (type = 'all') => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/files?type=${type}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/files?type=${type}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -142,7 +193,7 @@ export const getAllResumes = async () => {
 // ✅ Get analysis results
 export const getAnalysisResults = async (analysisId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/analysis/${analysisId}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/analysis/${analysisId}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -166,7 +217,7 @@ export const getAnalysisResults = async (analysisId) => {
 // ✅ Delete file
 export const deleteFile = async (fileId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/files/${fileId}`, {
+    const response = await fetchWithRetry(`${API_BASE_URL}/api/files/${fileId}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -245,4 +296,5 @@ export default {
   deleteFile,
   checkHealth,
   exportResults,
+  wakeUpBackend,
 };
