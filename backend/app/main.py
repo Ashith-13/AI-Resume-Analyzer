@@ -18,7 +18,7 @@ CORS(app, resources={
             "http://localhost:8080",
             "http://localhost:3000",
             "https://*.netlify.app",  # All Netlify preview deployments
-            "https://eloquent-treacle-67eb68.netlify.app/",  # Update with your actual URL after deployment
+            "https://innomatics-resume-analyzer.netlify.app/",  # Update with your actual URL after deployment
         ],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
